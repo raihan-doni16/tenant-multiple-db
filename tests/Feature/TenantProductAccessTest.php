@@ -5,10 +5,8 @@ namespace Tests\Feature;
 use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Hash;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
-use Stancl\Tenancy\Database\TenantScope;
 
 class TenantProductAccessTest extends TestCase
 {
@@ -21,7 +19,7 @@ class TenantProductAccessTest extends TestCase
         // Tenancy migrations are run via tenant creation.
         Tenant::create([
             'id' => 'test-tenant',
-            'data' => ['name' => 'Test Tenant'],
+            'display_name' => 'Test Tenant',
         ]);
     }
 

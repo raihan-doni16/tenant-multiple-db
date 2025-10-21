@@ -30,15 +30,13 @@ class TenantController extends Controller
             })
             ->latest()
             ->paginate($perPage)
-            ->through(function (Tenant $tenant) {
-                return [
-                    'id' => $tenant->id,
-                    'name' => $tenant->database()->getName(),
-                    'database' => $tenant->database()->getName(),
-                    'created_at' => $tenant->created_at,
-                    'updated_at' => $tenant->updated_at,
-                ];
-            });
+            ->through(fn (Tenant $tenant) => [
+                'id' => $tenant->id,
+                'name' => $tenant->display_name,
+                'database' => $tenant->database()->getName(),
+                'created_at' => $tenant->created_at,
+                'updated_at' => $tenant->updated_at,
+            ]);
 
         return response()->json($tenants);
     }
@@ -55,8 +53,8 @@ class TenantController extends Controller
 
         $tenant = Tenant::create([
             'id' => $validated['slug'],
+            'display_name' => $validated['name'],
             'data' => [
-                'name' => $validated['name'],
                 'slug' => $validated['slug'],
             ],
         ]);
@@ -83,11 +81,11 @@ class TenantController extends Controller
             throw $exception;
         }
 
-        return response()->json([
-            'id' => $tenant->id,
-            'name' => $tenant->name,
-            'database' => $tenant->database()->getName(),
-        ], 201);
+       return response()->json([
+           'id' => $tenant->id,
+           'name' => $tenant->name,
+           'database' => $tenant->database()->getName(),
+       ], 201);
     }
 
     public function destroy(string $tenantId): JsonResponse
@@ -95,8 +93,33 @@ class TenantController extends Controller
         $tenant = Tenant::query()->findOrFail($tenantId);
         $tenant->delete();
 
-       return response()->json([    
+       return response()->json([
             'data' => $tenant,
         ], 201);
+    }
+
+    public function publicIndex(Request $request): JsonResponse
+    {
+        $perPage = (int) $request->integer('per_page', 12);
+        $perPage = max(1, min($perPage, 100));
+        $search = trim((string) $request->query('search', ''));
+
+        $tenants = Tenant::query()
+            ->when($search !== '', function ($query) use ($search) {
+                $query->where(function ($builder) use ($search) {
+                    $builder
+                        ->where('id', 'like', "%{$search}%")
+                        ->orWhere('data->name', 'like', "%{$search}%");
+                });
+            })
+            ->orderBy('id')
+            ->paginate($perPage)
+            ->through(fn (Tenant $tenant) => [
+                'id' => $tenant->id,
+                'name' => $tenant->name,
+                'created_at' => $tenant->created_at,
+            ]);
+
+        return response()->json($tenants);
     }
 }

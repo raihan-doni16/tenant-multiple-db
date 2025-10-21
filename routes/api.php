@@ -8,6 +8,8 @@ use App\Http\Controllers\Tenant\ProductController;
 use Illuminate\Support\Facades\Route;
 use Stancl\Tenancy\Middleware\InitializeTenancyByPath;
 
+Route::get('tenants', [TenantController::class, 'publicIndex']);
+
 Route::prefix('admin')->group(function () {
     Route::post('auth/login', [AdminAuthController::class, 'login']);
 
@@ -31,12 +33,12 @@ Route::middleware([
     Route::post('auth/register', [AuthController::class, 'register']);
     Route::post('auth/login', [AuthController::class, 'login']);
 
+    Route::get('products', [ProductController::class, 'index']);
+    Route::get('products/{product}', [ProductController::class, 'show']);
+
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('auth/logout', [AuthController::class, 'logout']);
         Route::get('auth/me', [AuthController::class, 'me']);
-
-        Route::get('products', [ProductController::class, 'index']);
-        Route::get('products/{product}', [ProductController::class, 'show']);
         Route::post('products', [ProductController::class, 'store']);
         Route::patch('products/{product}', [ProductController::class, 'update']);
         Route::delete('products/{product}', [ProductController::class, 'destroy']);

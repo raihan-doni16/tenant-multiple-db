@@ -2,6 +2,26 @@
 
 use Illuminate\Support\Str;
 
+$centralDriver = env('CENTRAL_DB_DRIVER', env('DB_CONNECTION', 'pgsql'));
+$tenantDriver = env('TENANT_DB_DRIVER', $centralDriver);
+
+$centralDatabase = env('CENTRAL_DB_DATABASE', 'ecommerce_central');
+if ($centralDriver === 'sqlite' && $centralDatabase !== ':memory:' && ! Str::startsWith($centralDatabase, ['/','\\'])) {
+    $centralDatabase = base_path($centralDatabase);
+}
+
+$tenantDatabase = null;
+$rawTenantDatabase = env('TENANT_DB_DATABASE');
+if ($tenantDriver === 'sqlite') {
+    if ($rawTenantDatabase && $rawTenantDatabase !== ':memory:' && ! Str::startsWith($rawTenantDatabase, ['/','\\'])) {
+        $tenantDatabase = base_path($rawTenantDatabase);
+    } else {
+        $tenantDatabase = $rawTenantDatabase;
+    }
+}
+
+
+
 return [
 
     /*
@@ -32,11 +52,11 @@ return [
     'connections' => [
 
         'central' => [
-            'driver' => env('CENTRAL_DB_DRIVER', 'pgsql'),
+            'driver' => $centralDriver,
             'url' => env('CENTRAL_DB_URL'),
             'host' => env('CENTRAL_DB_HOST', '127.0.0.1'),
             'port' => env('CENTRAL_DB_PORT', '5432'),
-            'database' => env('CENTRAL_DB_DATABASE', 'ecommerce_central'),
+            'database' => $centralDriver === 'sqlite' ? $centralDatabase : env('CENTRAL_DB_DATABASE', 'ecommerce_central'),
             'username' => env('CENTRAL_DB_USERNAME', 'postgres'),
             'password' => env('CENTRAL_DB_PASSWORD', ''),
             'charset' => env('CENTRAL_DB_CHARSET', 'utf8'),
@@ -47,11 +67,11 @@ return [
         ],
 
         'tenant_template' => [
-            'driver' => env('TENANT_DB_DRIVER', env('CENTRAL_DB_DRIVER', 'pgsql')),
+            'driver' => $tenantDriver,
             'url' => env('TENANT_DB_URL'),
             'host' => env('TENANT_DB_HOST', env('CENTRAL_DB_HOST', '127.0.0.1')),
             'port' => env('TENANT_DB_PORT', env('CENTRAL_DB_PORT', '5432')),
-            'database' => null,
+            'database' => $tenantDriver === 'sqlite' ? null : env('TENANT_DB_DATABASE'),
             'username' => env('TENANT_DB_USERNAME', env('CENTRAL_DB_USERNAME', 'postgres')),
             'password' => env('TENANT_DB_PASSWORD', env('CENTRAL_DB_PASSWORD', '')),
             'charset' => env('TENANT_DB_CHARSET', 'utf8'),
@@ -62,11 +82,11 @@ return [
         ],
 
         'tenant' => [
-            'driver' => env('TENANT_DB_DRIVER', env('CENTRAL_DB_DRIVER', 'pgsql')),
+            'driver' => $tenantDriver,
             'url' => env('TENANT_DB_URL'),
             'host' => env('TENANT_DB_HOST', env('CENTRAL_DB_HOST', '127.0.0.1')),
             'port' => env('TENANT_DB_PORT', env('CENTRAL_DB_PORT', '5432')),
-            'database' => null,
+            'database' => $tenantDriver === 'sqlite' ? $tenantDatabase : env('TENANT_DB_DATABASE'),
             'username' => env('TENANT_DB_USERNAME', env('CENTRAL_DB_USERNAME', 'postgres')),
             'password' => env('TENANT_DB_PASSWORD', env('CENTRAL_DB_PASSWORD', '')),
             'charset' => env('TENANT_DB_CHARSET', 'utf8'),

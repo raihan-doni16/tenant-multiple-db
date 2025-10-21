@@ -10,10 +10,7 @@ class Tenant extends BaseTenant implements TenantWithDatabase
 {
     use HasDatabase;
 
-    protected $fillable = [
-        'id',
-        'data',
-    ];
+    protected $guarded = [];
 
     protected $casts = [
         'data' => 'array',
@@ -21,7 +18,7 @@ class Tenant extends BaseTenant implements TenantWithDatabase
 
     public function getNameAttribute(): ?string
     {
-        return $this->data['name'] ?? null;
+        return $this->attributes['display_name'] ?? $this->data['name'] ?? null;
     }
 
     public function getPrimaryDomainAttribute(): ?string
