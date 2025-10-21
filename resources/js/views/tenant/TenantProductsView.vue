@@ -34,7 +34,7 @@ async function fetchProducts() {
 
         products.value = data.data ?? data;
     } catch (err) {
-        error.value = err.response?.data?.message ?? 'Gagal memuat produk';
+        error.value = err.response?.data?.message ?? 'Failed to load products.';
     } finally {
         loading.value = false;
     }
@@ -51,11 +51,11 @@ async function addToCart(product) {
             product_id: product.id,
             quantity: 1,
         });
-        feedbackStore.showSuccess('Produk ditambahkan ke keranjang.');
+        feedbackStore.showSuccess('Product added to cart.');
         window.dispatchEvent(new CustomEvent('cart:updated'));
         product.stock = Math.max(0, Number(product.stock) - 1);
     } catch (err) {
-        error.value = err.response?.data?.message ?? 'Gagal menambahkan produk ke keranjang';
+        error.value = err.response?.data?.message ?? 'Failed to add product to cart.';
     }
 }
 
@@ -76,23 +76,23 @@ onMounted(() => {
   <section class="space-y-8">
     <header class="flex flex-col gap-3 rounded-2xl bg-white p-6 shadow-sm shadow-blue-100/30 sm:flex-row sm:items-center sm:justify-between">
       <div>
-        <h1 class="text-3xl font-semibold text-slate-900">Katalog Produk</h1>
+        <h1 class="text-3xl font-semibold text-slate-900">Product Catalog</h1>
         <p class="text-sm text-slate-500">
-          Menampilkan produk aktif untuk tenant <span class="font-mono text-blue-600">{{ tenant }}</span>.
+          Showing active products for tenant <span class="font-mono text-blue-600">{{ tenant }}</span>.
         </p>
       </div>
       <form class="flex w-full gap-3 sm:w-auto" @submit.prevent="fetchProducts">
         <input
           v-model="filters.search"
           type="search"
-          placeholder="Cari produk..."
+          placeholder="Search products..."
           class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100 sm:w-64"
         />
         <button
           type="submit"
           class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
         >
-          Cari
+          Search
         </button>
       </form>
     </header>
@@ -102,7 +102,7 @@ onMounted(() => {
     </div>
 
     <div v-if="loading" class="grid place-items-center rounded-2xl border border-slate-200 bg-white py-12 text-slate-500 shadow-sm shadow-blue-100/20">
-      Memuat produk...
+      Loading products...
     </div>
 
     <div v-else class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
@@ -119,13 +119,13 @@ onMounted(() => {
             {{ product.name }}
           </RouterLink>
           <p class="text-sm text-slate-500">
-            {{ product.description ? truncate(product.description) : 'Belum ada deskripsi.' }}
+            {{ product.description ? truncate(product.description) : 'No description yet.' }}
           </p>
         </div>
 
         <div class="mt-6 flex items-center justify-between text-sm">
           <span class="text-lg font-semibold text-blue-600">{{ formatCurrency(product.price) }}</span>
-          <span class="text-slate-500">Stok: {{ product.stock }}</span>
+          <span class="text-slate-500">Stock: {{ product.stock }}</span>
         </div>
 
         <button
@@ -134,7 +134,7 @@ onMounted(() => {
           :disabled="!authStore.isAuthenticated || !product.is_active"
           @click="addToCart(product)"
         >
-          {{ authStore.isAuthenticated ? 'Tambahkan ke Keranjang' : 'Masuk untuk Belanja' }}
+          {{ authStore.isAuthenticated ? 'Add to Cart' : 'Sign in to shop' }}
         </button>
       </article>
 
@@ -142,7 +142,7 @@ onMounted(() => {
         v-if="!products.length"
         class="col-span-full rounded-2xl border border-slate-200 bg-white py-10 text-center text-sm text-slate-500 shadow-sm shadow-blue-100/20"
       >
-        Tidak ada produk ditemukan.
+        No products found.
       </p>
     </div>
   </section>

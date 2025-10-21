@@ -1,15 +1,15 @@
 <template>
   <section class="mx-auto max-w-xl space-y-6 rounded-2xl border border-slate-200 bg-white p-8 shadow-xl shadow-blue-100/50">
     <header class="space-y-2 text-center">
-      <h1 class="text-2xl font-semibold text-blue-600">Daftar Akun</h1>
+      <h1 class="text-2xl font-semibold text-blue-600">Create Account</h1>
       <p class="text-sm text-slate-500">
-        Buat akun untuk tenant <span class="font-mono text-blue-600">{{ tenant }}</span>.
+        Create an account for tenant <span class="font-mono text-blue-600">{{ tenant }}</span>.
       </p>
     </header>
 
     <form class="grid gap-4" @submit.prevent="submit">
       <div class="grid gap-1">
-        <label class="text-xs font-semibold uppercase tracking-wide text-slate-500">Nama Lengkap</label>
+        <label class="text-xs font-semibold uppercase tracking-wide text-slate-500">Full Name</label>
         <input
           v-model="form.name"
           type="text"
@@ -37,7 +37,7 @@
           />
         </div>
         <div class="grid gap-1">
-          <label class="text-xs font-semibold uppercase tracking-wide text-slate-500">Konfirmasi Password</label>
+          <label class="text-xs font-semibold uppercase tracking-wide text-slate-500">Confirm Password</label>
           <input
             v-model="form.password_confirmation"
             type="password"
@@ -52,16 +52,16 @@
         class="rounded-lg bg-blue-600 px-4 py-2 font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300"
         :disabled="loading"
       >
-        {{ loading ? 'Mendaftarkan...' : 'Daftar' }}
+        {{ loading ? 'Registering...' : 'Register' }}
       </button>
     </form>
 
     <p v-if="error" class="text-center text-sm text-rose-500">{{ error }}</p>
 
     <p class="text-center text-sm text-slate-500">
-      Sudah punya akun?
+      Already have an account?
       <RouterLink :to="{ name: 'tenant-login', params: { tenant } }" class="font-semibold text-blue-600 hover:text-blue-700">
-        Masuk di sini
+        Sign in here
       </RouterLink>
     </p>
   </section>
@@ -94,7 +94,7 @@ const error = ref('');
 
 async function submit() {
     if (form.password !== form.password_confirmation) {
-        error.value = 'Konfirmasi password tidak cocok.';
+        error.value = 'Password confirmation does not match.';
         return;
     }
 
@@ -103,10 +103,10 @@ async function submit() {
 
     try {
         await authStore.register(form);
-        feedbackStore.showSuccess('Registrasi berhasil! Selamat datang.');
+        feedbackStore.showSuccess('Registration successful! Welcome aboard.');
         router.push({ name: 'tenant-products', params: { tenant: tenant.value } });
     } catch (err) {
-        error.value = err.response?.data?.message ?? 'Registrasi gagal.';
+        error.value = err.response?.data?.message ?? 'Registration failed.';
     } finally {
         loading.value = false;
     }

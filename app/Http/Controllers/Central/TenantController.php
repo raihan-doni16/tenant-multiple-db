@@ -15,12 +15,22 @@ use Throwable;
 
 class TenantController extends Controller
 {
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
+        $perPage = (int) $request->integer('per_page', 10);
+        $perPage = max(1, min($perPage, 100));
+        $search = trim((string) $request->query('search', ''));
+
         $tenants = Tenant::query()
+            ->when($search !== '', function ($query) use ($search) {
+                $query->where(function ($query) use ($search) {
+                    $query->where('id', 'like', "%{$search}%")
+                        ->orWhere('data->name', 'like', "%{$search}%");
+                });
+            })
             ->latest()
-            ->get()
-            ->map(function (Tenant $tenant) {
+            ->paginate($perPage)
+            ->through(function (Tenant $tenant) {
                 return [
                     'id' => $tenant->id,
                     'name' => $tenant->database()->getName(),

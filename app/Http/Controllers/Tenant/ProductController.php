@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Product;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -13,19 +14,24 @@ class ProductController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
+        $perPage = (int) $request->integer('per_page', 15);
+        $perPage = max(1, min($perPage, 100));
+
         $products = Product::query()
-            ->when($request->boolean('active'), fn ($query) => $query->active())
+            ->when($request->has('active') && $request->boolean('active'), fn ($query) => $query->active())
             ->when($request->filled('search'), function ($query) use ($request) {
                 $search = $request->string('search');
 
                 $query->where(function ($builder) use ($search) {
                     $builder
                         ->where('name', 'ilike', "%{$search}%")
-                        ->orWhere('sku', 'ilike', "%{$search}%");
+                        ->orWhere('sku', 'ilike', "%{$search}%")
+                        ->orWhere('slug', 'ilike', "%{$search}%");
                 });
             })
             ->orderByDesc('created_at')
-            ->paginate($request->integer('per_page', 15));
+            ->paginate($perPage)
+            ->withQueryString();
 
         return response()->json($products);
     }
@@ -44,6 +50,10 @@ class ProductController extends Controller
             'is_active' => ['sometimes', 'boolean'],
             'attributes' => ['nullable', 'array'],
         ]);
+
+        if (empty($data['sku'])) {
+            $data['sku'] = $this->generateSku($data['name']);
+        }
 
         $product = Product::create($data);
 
@@ -70,6 +80,14 @@ class ProductController extends Controller
             'attributes' => ['nullable', 'array'],
         ]);
 
+        if (array_key_exists('sku', $data) && empty($data['sku'])) {
+            $name = $data['name'] ?? $product->name;
+
+            if ($name) {
+                $data['sku'] = $this->generateSku($name);
+            }
+        }
+
         $product->fill($data)->save();
 
         return response()->json($product->refresh());
@@ -93,5 +111,33 @@ class ProductController extends Controller
         if (! $user || ! $user->hasRole('owner')) {
             abort(Response::HTTP_FORBIDDEN, 'Only store owners can manage products.');
         }
+    }
+
+    protected function generateSku(string $name): string
+    {
+        $base = Str::of($name)
+            ->ascii()
+            ->upper()
+            ->replaceMatches('/[^A-Z0-9]+/', '-')
+            ->trim('-')
+            ->substr(0, 12)
+            ->trim('-');
+
+        if ($base->isEmpty()) {
+            $base = Str::upper(Str::random(6));
+        }
+
+        $baseSku = (string) $base;
+        $sku = $baseSku;
+
+        while (Product::where('sku', $sku)->exists()) {
+            $suffix = Str::upper(Str::random(4));
+            $sku = Str::of($baseSku)
+                ->append('-')
+                ->append($suffix)
+                ->substr(0, 64);
+        }
+
+        return $sku;
     }
 }

@@ -2,9 +2,9 @@
   <section class="space-y-8">
     <header class="flex flex-col gap-3 rounded-2xl bg-white p-6 shadow-sm shadow-blue-100/30 sm:flex-row sm:items-center sm:justify-between">
       <div>
-        <h1 class="text-3xl font-semibold text-slate-900">Dashboard Produk</h1>
+        <h1 class="text-3xl font-semibold text-slate-900">Product Dashboard</h1>
         <p class="text-sm text-slate-500">
-          Kelola produk untuk tenant <span class="font-mono text-blue-600">{{ tenant }}</span>.
+          Manage products for tenant <span class="font-mono text-blue-600">{{ tenant }}</span>.
         </p>
       </div>
       <button
@@ -12,75 +12,135 @@
         class="rounded-full border border-blue-200 bg-white px-5 py-2 text-sm font-semibold text-blue-600 transition hover:border-blue-400 hover:text-blue-700"
         @click="resetForm"
       >
-        Produk Baru
+        New Product
       </button>
     </header>
 
     <div class="grid gap-6 lg:grid-cols-[2fr_1fr]">
       <div class="space-y-4">
-        <div class="flex items-center justify-between">
-          <h2 class="text-lg font-semibold text-slate-900">Daftar Produk</h2>
+        <div class="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm shadow-blue-100/30 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 class="text-lg font-semibold text-slate-900">Product List</h2>
+            <p class="text-xs text-slate-500">Manage existing products, search, and browse by page.</p>
+          </div>
           <span class="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-blue-600">
-            {{ products.length }} produk
+            {{ pagination.total }} products
           </span>
+        </div>
+
+        <div class="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm shadow-blue-100/30 lg:flex-row lg:items-center lg:justify-between">
+          <div class="w-full lg:max-w-xs">
+            <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Search Products</label>
+            <input
+              v-model="search"
+              type="search"
+              placeholder="Search by name, SKU, or slug..."
+              class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
+              @input="onSearchChange"
+            />
+          </div>
+          <div class="flex w-full flex-col gap-2 lg:w-auto lg:flex-row lg:items-center lg:gap-3">
+            <label class="text-xs font-semibold uppercase tracking-wide text-slate-500 lg:text-right">Rows per page</label>
+            <select
+              v-model.number="pagination.per_page"
+              class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100 lg:w-32"
+              @change="onPerPageChange"
+            >
+              <option v-for="option in perPageOptions" :key="option" :value="option">
+                {{ option }}
+              </option>
+            </select>
+          </div>
+        </div>
+
+        <div v-if="listError" class="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-600 shadow-sm shadow-rose-100/30">
+          {{ listError }}
         </div>
 
         <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm shadow-blue-100/30">
           <table class="min-w-full divide-y divide-slate-200 text-sm">
             <thead class="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
               <tr>
-                <th class="px-4 py-3 text-left">Nama</th>
-                <th class="px-4 py-3 text-left">Harga</th>
-                <th class="px-4 py-3 text-left">Stok</th>
+                <th class="px-4 py-3 text-left">Name</th>
+                <th class="px-4 py-3 text-left">Price</th>
+                <th class="px-4 py-3 text-left">Stock</th>
                 <th class="px-4 py-3 text-left">Status</th>
-                <th class="px-4 py-3 text-right">Aksi</th>
+                <th class="px-4 py-3 text-right">Actions</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-100">
-              <tr v-for="product in products" :key="product.id" class="transition hover:bg-blue-50/50">
-                <td class="px-4 py-3">
-                  <p class="font-semibold text-slate-900">{{ product.name }}</p>
-                  <p class="text-xs uppercase tracking-wide text-slate-400">SKU: {{ product.sku }}</p>
-                </td>
-                <td class="px-4 py-3 text-sm text-slate-500">{{ formatCurrency(product.price) }}</td>
-                <td class="px-4 py-3 text-slate-500">{{ product.stock }}</td>
-                <td
-                  class="px-4 py-3 text-xs font-semibold uppercase tracking-wide"
-                  :class="product.is_active ? 'text-blue-600' : 'text-slate-400'"
-                >
-                  {{ product.is_active ? 'Aktif' : 'Draft' }}
-                </td>
-                <td class="px-4 py-3 text-right space-x-2">
-                  <button
-                    type="button"
-                    class="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-blue-600 transition hover:bg-blue-100 hover:text-blue-700"
-                    @click="editProduct(product)"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    type="button"
-                    class="rounded-full bg-rose-500 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white transition hover:bg-rose-600"
-                    @click="deleteProduct(product)"
-                  >
-                    Hapus
-                  </button>
-                </td>
+              <tr v-if="listLoading">
+                <td colspan="5" class="px-4 py-6 text-center text-sm text-slate-400">Loading products...</td>
               </tr>
-              <tr v-if="!products.length">
-                <td colspan="5" class="px-4 py-6 text-center text-sm text-slate-400">Belum ada produk.</td>
-              </tr>
+              <template v-else>
+                <tr v-for="product in products" :key="product.id" class="transition hover:bg-blue-50/50">
+                  <td class="px-4 py-3">
+                    <p class="font-semibold text-slate-900">{{ product.name }}</p>
+                    <p class="text-xs uppercase tracking-wide text-slate-400">SKU: {{ product.sku }}</p>
+                  </td>
+                  <td class="px-4 py-3 text-sm text-slate-500">{{ formatCurrency(product.price) }}</td>
+                  <td class="px-4 py-3 text-slate-500">{{ product.stock }}</td>
+                  <td
+                    class="px-4 py-3 text-xs font-semibold uppercase tracking-wide"
+                    :class="product.is_active ? 'text-blue-600' : 'text-slate-400'"
+                  >
+                    {{ product.is_active ? 'Active' : 'Draft' }}
+                  </td>
+                  <td class="px-4 py-3 text-right space-x-2">
+                    <button
+                      type="button"
+                      class="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-blue-600 transition hover:bg-blue-100 hover:text-blue-700"
+                      @click="editProduct(product)"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      type="button"
+                      class="rounded-full bg-rose-500 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white transition hover:bg-rose-600"
+                      @click="deleteProduct(product)"
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+                <tr v-if="!products.length">
+                  <td colspan="5" class="px-4 py-6 text-center text-sm text-slate-400">No products found.</td>
+                </tr>
+              </template>
             </tbody>
           </table>
+          <div
+            v-if="pagination.total > 0 && !listLoading"
+            class="flex flex-col gap-3 border-t border-slate-200 px-4 py-3 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between"
+          >
+            <span>Showing {{ pagination.from }}-{{ pagination.to }} of {{ pagination.total }} products</span>
+            <div class="flex items-center gap-3">
+              <button
+                class="rounded-full border border-slate-200 px-3 py-1 font-semibold text-slate-600 transition hover:border-blue-200 hover:text-blue-600 disabled:cursor-not-allowed disabled:border-slate-100 disabled:text-slate-300"
+                :disabled="pagination.current_page <= 1"
+                @click="changePage(pagination.current_page - 1)"
+              >
+                Previous
+              </button>
+              <span class="font-semibold text-slate-700">Page {{ pagination.current_page }} of {{ pagination.last_page }}</span>
+              <button
+                class="rounded-full border border-slate-200 px-3 py-1 font-semibold text-slate-600 transition hover:border-blue-200 hover:text-blue-600 disabled:cursor-not-allowed disabled:border-slate-100 disabled:text-slate-300"
+                :disabled="pagination.current_page >= pagination.last_page"
+                @click="changePage(pagination.current_page + 1)"
+              >
+                Next
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
       <aside class="space-y-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-lg shadow-blue-100/40">
-        <h2 class="text-lg font-semibold text-slate-900">{{ form.id ? 'Perbarui Produk' : 'Produk Baru' }}</h2>
+        <h2 class="text-lg font-semibold text-slate-900">{{ form.id ? 'Update Product' : 'New Product' }}</h2>
 
         <form class="grid gap-4" @submit.prevent="saveProduct">
           <div class="grid gap-1">
-            <label class="text-xs font-semibold uppercase tracking-wide text-slate-500">Nama</label>
+            <label class="text-xs font-semibold uppercase tracking-wide text-slate-500">Name</label>
             <input
               v-model="form.name"
               type="text"
@@ -91,10 +151,13 @@
           <div class="grid gap-1">
             <label class="text-xs font-semibold uppercase tracking-wide text-slate-500">SKU</label>
             <input
-              v-model="form.sku"
+              :value="form.sku || ''"
               type="text"
-              class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
+              readonly
+              placeholder="Generated automatically"
+              class="rounded-lg border border-slate-200 bg-slate-100 px-3 py-2 text-sm text-slate-500"
             />
+            <p class="text-xs text-slate-400">SKU is generated automatically when the product is saved.</p>
           </div>
           <div class="grid gap-1">
             <label class="text-xs font-semibold uppercase tracking-wide text-slate-500">Slug</label>
@@ -105,7 +168,7 @@
             />
           </div>
           <div class="grid gap-1">
-            <label class="text-xs font-semibold uppercase tracking-wide text-slate-500">Deskripsi</label>
+            <label class="text-xs font-semibold uppercase tracking-wide text-slate-500">Description</label>
             <textarea
               v-model="form.description"
               rows="3"
@@ -114,7 +177,7 @@
           </div>
           <div class="grid gap-4 sm:grid-cols-2">
             <div class="grid gap-1">
-              <label class="text-xs font-semibold uppercase tracking-wide text-slate-500">Harga</label>
+              <label class="text-xs font-semibold uppercase tracking-wide text-slate-500">Price</label>
               <input
                 v-model.number="form.price"
                 type="number"
@@ -125,7 +188,7 @@
               />
             </div>
             <div class="grid gap-1">
-              <label class="text-xs font-semibold uppercase tracking-wide text-slate-500">Stok</label>
+              <label class="text-xs font-semibold uppercase tracking-wide text-slate-500">Stock</label>
               <input
                 v-model.number="form.stock"
                 type="number"
@@ -137,7 +200,7 @@
           </div>
           <label class="flex items-center gap-2 rounded-lg bg-slate-50 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
             <input v-model="form.is_active" type="checkbox" class="h-4 w-4 rounded border border-slate-300 text-blue-600 focus:ring-blue-500" />
-            Produk aktif
+            Active product
           </label>
 
           <button
@@ -145,7 +208,7 @@
             class="rounded-lg bg-blue-600 px-4 py-2 font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300"
             :disabled="saving"
           >
-            {{ saving ? 'Menyimpan...' : form.id ? 'Perbarui' : 'Simpan' }}
+            {{ saving ? 'Saving...' : form.id ? 'Update' : 'Save' }}
           </button>
         </form>
 
@@ -156,7 +219,7 @@
 </template>
 
 <script setup>
-import { onMounted, reactive, ref, computed } from 'vue';
+import { onBeforeUnmount, onMounted, reactive, ref, computed } from 'vue';
 import { useRoute } from 'vue-router';
 import { api, tenantPath } from '../../api/client';
 import { useFeedbackStore } from '../../stores/feedback';
@@ -165,9 +228,22 @@ const route = useRoute();
 const tenant = computed(() => route.params.tenant);
 
 const products = ref([]);
+const listLoading = ref(false);
+const listError = ref('');
 const saving = ref(false);
 const formError = ref('');
 const feedbackStore = useFeedbackStore();
+const search = ref('');
+const pagination = reactive({
+    current_page: 1,
+    last_page: 1,
+    per_page: 10,
+    total: 0,
+    from: 0,
+    to: 0,
+});
+const perPageOptions = [5, 10, 25, 50, 100];
+let searchTimer;
 
 const form = reactive({
     id: null,
@@ -181,15 +257,35 @@ const form = reactive({
     attributes: {},
 });
 
-async function fetchProducts() {
-    const { data } = await api.get(tenantPath(tenant.value, 'products'), {
-        params: {
-            active: false,
-            per_page: 100,
-        },
-    });
+async function fetchProducts(page = pagination.current_page) {
+    listLoading.value = true;
+    listError.value = '';
 
-    products.value = data.data ?? data;
+    try {
+        const { data } = await api.get(tenantPath(tenant.value, 'products'), {
+            params: {
+                active: false,
+                page,
+                per_page: pagination.per_page,
+                search: search.value || undefined,
+            },
+        });
+
+        products.value = data.data ?? [];
+        Object.assign(pagination, {
+            current_page: data.current_page ?? 1,
+            last_page: data.last_page ?? 1,
+            per_page: Number(data.per_page ?? pagination.per_page),
+            total: data.total ?? (Array.isArray(data.data) ? data.data.length : 0),
+            from: data.from ?? 0,
+            to: data.to ?? 0,
+        });
+    } catch (err) {
+        listError.value = err.response?.data?.message ?? 'Failed to load products.';
+        products.value = [];
+    } finally {
+        listLoading.value = false;
+    }
 }
 
 function editProduct(product) {
@@ -228,7 +324,6 @@ async function saveProduct() {
 
     const payload = {
         name: form.name,
-        sku: form.sku || null,
         slug: form.slug || null,
         description: form.description || null,
         price: form.price,
@@ -246,19 +341,19 @@ async function saveProduct() {
         }
 
         if (isNewProduct) {
-            feedbackStore.showSuccess('Produk baru berhasil ditambahkan.');
+            feedbackStore.showSuccess('New product added successfully.');
         }
 
-        await fetchProducts();
+        await fetchProducts(isNewProduct ? 1 : pagination.current_page);
     } catch (err) {
-        formError.value = err.response?.data?.message ?? 'Gagal menyimpan produk.';
+        formError.value = err.response?.data?.message ?? 'Failed to save product.';
     } finally {
         saving.value = false;
     }
 }
 
 async function deleteProduct(product) {
-    if (!confirm(`Hapus produk ${product.name}?`)) {
+    if (!confirm(`Delete product ${product.name}?`)) {
         return;
     }
 
@@ -267,15 +362,43 @@ async function deleteProduct(product) {
         if (form.id === product.id) {
             resetForm();
         }
-        await fetchProducts();
+        await fetchProducts(pagination.current_page);
+        if (!products.value.length && pagination.current_page > 1) {
+            await fetchProducts(pagination.current_page - 1);
+        }
     } catch (err) {
-        formError.value = err.response?.data?.message ?? 'Gagal menghapus produk.';
+        formError.value = err.response?.data?.message ?? 'Failed to delete product.';
     }
+}
+
+function changePage(page) {
+    if (page < 1 || page > pagination.last_page || page === pagination.current_page) {
+        return;
+    }
+
+    void fetchProducts(page);
+}
+
+function onPerPageChange() {
+    void fetchProducts(1);
+}
+
+function onSearchChange() {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => {
+        void fetchProducts(1);
+    }, 300);
 }
 
 function formatCurrency(value) {
     return Number(value).toLocaleString('id-ID', { style: 'currency', currency: 'IDR' });
 }
 
-onMounted(fetchProducts);
+onMounted(() => {
+    void fetchProducts(1);
+});
+
+onBeforeUnmount(() => {
+    clearTimeout(searchTimer);
+});
 </script>

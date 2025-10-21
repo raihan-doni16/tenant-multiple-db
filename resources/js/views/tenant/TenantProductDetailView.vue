@@ -25,7 +25,7 @@ async function fetchProduct() {
         const { data } = await api.get(tenantPath(tenant.value, `products/${productId.value}`));
         product.value = data;
     } catch (err) {
-        error.value = err.response?.data?.message ?? 'Produk tidak ditemukan';
+        error.value = err.response?.data?.message ?? 'Product not found.';
     } finally {
         loading.value = false;
     }
@@ -42,13 +42,13 @@ async function addToCart() {
             product_id: product.value.id,
             quantity: 1,
         });
-        feedbackStore.showSuccess('Produk ditambahkan ke keranjang.');
+        feedbackStore.showSuccess('Product added to cart.');
         window.dispatchEvent(new CustomEvent('cart:updated'));
         if (product.value) {
             product.value.stock = Math.max(0, Number(product.value.stock) - 1);
         }
     } catch (err) {
-        error.value = err.response?.data?.message ?? 'Gagal menambahkan produk ke keranjang';
+        error.value = err.response?.data?.message ?? 'Failed to add product to cart.';
     }
 }
 
@@ -64,11 +64,11 @@ onMounted(fetchProduct);
       :to="{ name: 'tenant-products', params: { tenant } }"
       class="inline-flex items-center text-sm font-semibold text-blue-600 transition hover:text-blue-700"
     >
-      &larr; Kembali ke Produk
+      &larr; Back to Products
     </RouterLink>
 
     <div v-if="loading" class="rounded-2xl border border-slate-200 bg-white p-6 text-slate-500 shadow-sm shadow-blue-100/20">
-      Memuat produk...
+      Loading product...
     </div>
 
     <div v-else-if="error" class="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-600">
@@ -84,11 +84,11 @@ onMounted(fetchProduct);
         </p>
       </header>
 
-      <p class="text-slate-600">{{ product.description ?? 'Belum ada deskripsi yang tersedia.' }}</p>
+      <p class="text-slate-600">{{ product.description ?? 'No description available yet.' }}</p>
 
       <div class="flex flex-wrap items-center gap-6">
         <div class="text-3xl font-semibold text-blue-600">{{ formatCurrency(product.price) }}</div>
-        <div class="text-sm text-slate-500">Stok tersedia: {{ product.stock }}</div>
+        <div class="text-sm text-slate-500">Available stock: {{ product.stock }}</div>
       </div>
 
       <button
@@ -97,12 +97,12 @@ onMounted(fetchProduct);
         :disabled="!authStore.isAuthenticated || !product.is_active"
         @click="addToCart"
       >
-        {{ authStore.isAuthenticated ? 'Masukkan Keranjang' : 'Masuk untuk Belanja' }}
+        {{ authStore.isAuthenticated ? 'Add to Cart' : 'Sign in to shop' }}
       </button>
     </article>
 
     <div v-else class="rounded-2xl border border-rose-200 bg-rose-50 p-6 text-sm text-rose-600">
-      Produk tidak ditemukan.
+      Product not found.
     </div>
   </section>
 </template>

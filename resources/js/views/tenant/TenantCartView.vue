@@ -25,7 +25,7 @@ async function fetchCart() {
         const { data } = await api.get(tenantPath(tenant.value, 'cart'));
         Object.assign(cart, data);
     } catch (err) {
-        error.value = err.response?.data?.message ?? 'Gagal memuat keranjang.';
+        error.value = err.response?.data?.message ?? 'Failed to load cart.';
     } finally {
         loading.value = false;
     }
@@ -42,7 +42,7 @@ async function onQuantityChange(item, value) {
         });
         Object.assign(cart, data);
     } catch (err) {
-        error.value = err.response?.data?.message ?? 'Gagal memperbarui jumlah.';
+        error.value = err.response?.data?.message ?? 'Failed to update quantity.';
     }
 }
 
@@ -51,7 +51,7 @@ async function removeItem(item) {
         const { data } = await api.delete(tenantPath(tenant.value, `cart/items/${item.id}`));
         Object.assign(cart, data);
     } catch (err) {
-        error.value = err.response?.data?.message ?? 'Gagal menghapus item.';
+        error.value = err.response?.data?.message ?? 'Failed to remove item.';
     }
 }
 
@@ -75,14 +75,14 @@ onBeforeUnmount(() => {
 <template>
   <section class="space-y-8">
     <header class="space-y-2">
-      <h1 class="text-3xl font-semibold text-slate-900">Keranjang Belanja</h1>
+      <h1 class="text-3xl font-semibold text-slate-900">Shopping Cart</h1>
       <p class="text-sm text-slate-500">
-        Kelola item keranjang untuk tenant <span class="font-mono text-blue-600">{{ tenant }}</span>.
+        Manage cart items for tenant <span class="font-mono text-blue-600">{{ tenant }}</span>.
       </p>
     </header>
 
     <div v-if="loading" class="rounded-2xl border border-slate-200 bg-white p-6 text-slate-500 shadow-sm shadow-blue-100/20">
-      Memuat keranjang...
+      Loading cart...
     </div>
 
     <div v-else class="space-y-6">
@@ -94,7 +94,7 @@ onBeforeUnmount(() => {
         v-if="!cart.items.length"
         class="rounded-2xl border border-slate-200 bg-white p-6 text-center text-sm text-slate-500 shadow-sm shadow-blue-100/20"
       >
-        Keranjang kosong. Mulai belanja di katalog produk.
+        Your cart is empty. Browse the product catalog to start shopping.
       </div>
 
       <div v-else class="space-y-4">
@@ -106,11 +106,11 @@ onBeforeUnmount(() => {
           <div>
             <h3 class="text-lg font-semibold text-slate-900">{{ item.product.name }}</h3>
             <p class="text-xs uppercase tracking-wide text-slate-400">SKU: {{ item.product.sku }}</p>
-            <p class="mt-2 text-sm text-slate-500">Harga: {{ formatCurrency(item.unit_price) }}</p>
+            <p class="mt-2 text-sm text-slate-500">Price: {{ formatCurrency(item.unit_price) }}</p>
           </div>
 
           <div class="flex flex-wrap items-center gap-3 rounded-xl bg-slate-50 px-4 py-3">
-            <label class="text-xs font-semibold uppercase tracking-wide text-slate-500">Jumlah</label>
+            <label class="text-xs font-semibold uppercase tracking-wide text-slate-500">Quantity</label>
             <input
               :value="item.quantity"
               type="number"
@@ -124,14 +124,14 @@ onBeforeUnmount(() => {
               class="rounded-full bg-rose-500 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-white transition hover:bg-rose-600"
               @click="removeItem(item)"
             >
-              Hapus
+              Remove
             </button>
           </div>
         </article>
       </div>
 
       <footer class="flex flex-col items-end gap-2 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-blue-100/30">
-        <p class="text-sm text-slate-500">Total item: {{ cart.total_items }}</p>
+        <p class="text-sm text-slate-500">Total items: {{ cart.total_items }}</p>
         <p class="text-xl font-semibold text-blue-600">Subtotal: {{ formatCurrency(cart.subtotal) }}</p>
       </footer>
     </div>

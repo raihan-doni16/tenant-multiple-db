@@ -2,7 +2,7 @@
   <header class="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur">
     <div class="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
       <RouterLink to="/" class="text-lg font-semibold tracking-tight text-blue-600">
-        Tenant Commerce
+        Tenant Multi Database
       </RouterLink>
 
       <nav class="flex items-center gap-3 text-sm font-medium text-slate-600">
@@ -12,14 +12,14 @@
             :to="{ name: 'tenant-products', params: { tenant: tenantSlug } }"
             class="rounded-full px-3 py-1 transition hover:bg-blue-50 hover:text-blue-600"
           >
-            Produk
+            Products
           </RouterLink>
           <RouterLink
             v-if="authStore.isAuthenticated"
             :to="{ name: 'tenant-cart', params: { tenant: tenantSlug } }"
             class="rounded-full px-3 py-1 transition hover:bg-blue-50 hover:text-blue-600"
           >
-            Keranjang
+            Cart
           </RouterLink>
 
           <RouterLink
@@ -27,7 +27,7 @@
             :to="{ name: 'tenant-login', params: { tenant: tenantSlug } }"
             class="rounded-full px-3 py-1 transition hover:bg-blue-50 hover:text-blue-600"
           >
-            Masuk
+            Sign In
           </RouterLink>
 
           <RouterLink
@@ -35,7 +35,7 @@
             :to="{ name: 'tenant-register', params: { tenant: tenantSlug } }"
             class="rounded-full px-3 py-1 transition hover:bg-blue-50 hover:text-blue-600"
           >
-            Daftar
+            Register
           </RouterLink>
 
           <RouterLink
@@ -43,7 +43,7 @@
             :to="{ name: 'tenant-dashboard-products', params: { tenant: tenantSlug } }"
             class="rounded-full px-3 py-1 transition hover:bg-blue-50 hover:text-blue-600"
           >
-            Dashboard Produk
+            Product Dashboard
           </RouterLink>
 
           <button
@@ -52,23 +52,17 @@
             class="rounded-full bg-blue-600 px-4 py-2 text-white transition hover:bg-blue-700"
             @click="logout"
           >
-            Keluar
+            Sign Out
           </button>
         </template>
 
         <template v-else>
           <RouterLink
-            to="/admin/tenants"
-            class="rounded-full px-3 py-1 transition hover:bg-blue-50 hover:text-blue-600"
-          >
-            Tenant Manager
-          </RouterLink>
-          <RouterLink
             v-if="!adminAuthStore.isAuthenticated"
             to="/admin/login"
             class="rounded-full px-3 py-1 transition hover:bg-blue-50 hover:text-blue-600"
           >
-            Masuk Admin
+            Admin Login
           </RouterLink>
           <button
             v-else
@@ -76,7 +70,7 @@
             class="rounded-full bg-blue-600 px-4 py-2 text-white transition hover:bg-blue-700"
             @click="logoutAdmin"
           >
-            Keluar Admin
+            Logout Admin
           </button>
         </template>
       </nav>
