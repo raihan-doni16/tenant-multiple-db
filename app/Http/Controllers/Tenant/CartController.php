@@ -8,6 +8,7 @@ use App\Models\ShoppingCart;
 use App\Models\ShoppingCartItem;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\Response;
 
 class CartController extends Controller
@@ -28,30 +29,37 @@ class CartController extends Controller
             'quantity' => ['required', 'integer', 'min:1'],
         ]);
 
-        $product = Product::query()->whereKey($data['product_id'])->firstOrFail();
+        $response = DB::transaction(function () use ($cart, $data) {
+            $product = Product::query()->lockForUpdate()->findOrFail($data['product_id']);
 
-        if (! $product->is_active) {
-            return response()->json([
-                'message' => 'Product is not available.',
-            ], Response::HTTP_UNPROCESSABLE_ENTITY);
-        }
+            if (! $product->is_active) {
+                return response()->json([
+                    'message' => 'Product is not available.',
+                ], Response::HTTP_UNPROCESSABLE_ENTITY);
+            }
 
-        $item = $cart->items()->firstOrNew(['product_id' => $product->id]);
-        $requestedQuantity = ($item->exists ? $item->quantity : 0) + $data['quantity'];
+            $item = $cart->items()->firstOrNew(['product_id' => $product->id]);
+            $currentQuantity = $item->exists ? $item->quantity : 0;
+            $difference = (int) $data['quantity'];
 
-        if ($product->stock < $requestedQuantity) {
-            return response()->json([
-                'message' => 'Quantity exceeds available stock.',
-            ], Response::HTTP_UNPROCESSABLE_ENTITY);
-        }
+            if ($product->stock < $difference) {
+                return response()->json([
+                    'message' => 'Quantity exceeds available stock.',
+                ], Response::HTTP_UNPROCESSABLE_ENTITY);
+            }
 
-        $item->quantity = $requestedQuantity;
-        $item->unit_price = $product->price;
-        $item->save();
+            $product->decrement('stock', $difference);
 
-        $cart->load('items.product');
+            $item->quantity = $currentQuantity + $difference;
+            $item->unit_price = $product->price;
+            $item->save();
 
-        return response()->json($this->formatCart($cart), Response::HTTP_CREATED);
+            $cart->load('items.product');
+
+            return response()->json($this->formatCart($cart), Response::HTTP_CREATED);
+        });
+
+        return $response;
     }
 
     public function updateItem(Request $request, ShoppingCartItem $shoppingCartItem): JsonResponse
@@ -66,25 +74,41 @@ class CartController extends Controller
             'quantity' => ['required', 'integer', 'min:0'],
         ]);
 
-        $shoppingCartItem->loadMissing('product');
+        $response = DB::transaction(function () use ($shoppingCartItem, $data, $cart) {
+            $shoppingCartItem->loadMissing('product');
+            $product = Product::query()->lockForUpdate()->findOrFail($shoppingCartItem->product_id);
 
-        if ((int) $data['quantity'] === 0) {
-            $shoppingCartItem->delete();
+            $newQuantity = (int) $data['quantity'];
+
+            if ($newQuantity === 0) {
+                $product->increment('stock', $shoppingCartItem->quantity);
+                $shoppingCartItem->delete();
+                $cart->load('items.product');
+
+                return response()->json($this->formatCart($cart));
+            }
+
+            $difference = $newQuantity - $shoppingCartItem->quantity;
+
+            if ($difference > 0) {
+                if ($product->stock < $difference) {
+                    return response()->json([
+                        'message' => 'Quantity exceeds available stock.',
+                    ], Response::HTTP_UNPROCESSABLE_ENTITY);
+                }
+
+                $product->decrement('stock', $difference);
+            } elseif ($difference < 0) {
+                $product->increment('stock', abs($difference));
+            }
+
+            $shoppingCartItem->update(['quantity' => $newQuantity]);
             $cart->load('items.product');
 
             return response()->json($this->formatCart($cart));
-        }
+        });
 
-        if ($shoppingCartItem->product->stock < $data['quantity']) {
-            return response()->json([
-                'message' => 'Quantity exceeds available stock.',
-            ], Response::HTTP_UNPROCESSABLE_ENTITY);
-        }
-
-        $shoppingCartItem->update(['quantity' => $data['quantity']]);
-        $cart->load('items.product');
-
-        return response()->json($this->formatCart($cart));
+        return $response;
     }
 
     public function removeItem(Request $request, ShoppingCartItem $shoppingCartItem): JsonResponse
@@ -97,8 +121,12 @@ class CartController extends Controller
             abort(Response::HTTP_FORBIDDEN, 'Item does not belong to your cart.');
         }
 
-        $shoppingCartItem->delete();
-        $cart->load('items.product');
+        DB::transaction(function () use ($shoppingCartItem, $cart) {
+            $product = Product::query()->lockForUpdate()->findOrFail($shoppingCartItem->product_id);
+            $product->increment('stock', $shoppingCartItem->quantity);
+            $shoppingCartItem->delete();
+            $cart->load('items.product');
+        });
 
         return response()->json($this->formatCart($cart));
     }

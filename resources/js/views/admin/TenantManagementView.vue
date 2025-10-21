@@ -1,82 +1,117 @@
 <template>
-  <section class="space-y-6">
-    <header class="space-y-1">
-      <h1 class="text-3xl font-semibold text-emerald-400">Manajemen Tenant</h1>
-      <p class="text-sm text-slate-400">Buat toko baru dan kelola basis data multi-tenant Anda.</p>
+  <section class="space-y-8">
+    <header class="space-y-2">
+      <h1 class="text-3xl font-semibold text-slate-900">Manajemen Tenant</h1>
+      <p class="text-sm text-slate-500">Buat toko baru dan kelola basis data multi-tenant Anda.</p>
     </header>
 
-    <form class="grid gap-4 rounded border border-slate-800 bg-slate-900/60 p-4" @submit.prevent="createTenant">
+    <form class="grid gap-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-lg shadow-blue-100/40" @submit.prevent="createTenant">
       <div class="grid gap-1">
-        <label class="text-xs uppercase tracking-wide text-slate-400">Nama Tenant</label>
-        <input v-model="form.name" type="text" required class="rounded border border-slate-700 bg-slate-950 px-3 py-2" placeholder="Contoh: Toko Volantis" />
+        <label class="text-xs font-semibold uppercase tracking-wide text-slate-500">Nama Tenant</label>
+        <input
+          v-model="form.name"
+          type="text"
+          required
+          class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
+          placeholder="Contoh: Toko Volantis"
+        />
       </div>
       <div class="grid gap-1">
-        <label class="text-xs uppercase tracking-wide text-slate-400">Slug</label>
-        <input v-model="form.slug" type="text" required class="rounded border border-slate-700 bg-slate-950 px-3 py-2" placeholder="Contoh: volantis" />
-        <p class="text-xs text-slate-500">Slug digunakan pada URL: <code>/[slug]</code></p>
+        <label class="text-xs font-semibold uppercase tracking-wide text-slate-500">Slug</label>
+        <input
+          v-model="form.slug"
+          type="text"
+          required
+          class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
+          placeholder="Contoh: volantis"
+        />
+        <p class="text-xs text-slate-400">Slug digunakan pada URL: <code class="rounded bg-slate-100 px-1 py-0.5">/[slug]</code></p>
       </div>
 
-      <div class="grid gap-1 sm:grid-cols-2 sm:gap-4">
+      <div class="grid gap-4 sm:grid-cols-2">
         <div class="grid gap-1">
-          <label class="text-xs uppercase tracking-wide text-slate-400">Nama Admin</label>
-          <input v-model="form.admin_name" type="text" required class="rounded border border-slate-700 bg-slate-950 px-3 py-2" />
+          <label class="text-xs font-semibold uppercase tracking-wide text-slate-500">Nama Admin</label>
+          <input
+            v-model="form.admin_name"
+            type="text"
+            required
+            class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
+          />
         </div>
         <div class="grid gap-1">
-          <label class="text-xs uppercase tracking-wide text-slate-400">Email Admin</label>
-          <input v-model="form.admin_email" type="email" required class="rounded border border-slate-700 bg-slate-950 px-3 py-2" />
+          <label class="text-xs font-semibold uppercase tracking-wide text-slate-500">Email Admin</label>
+          <input
+            v-model="form.admin_email"
+            type="email"
+            required
+            class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
+          />
         </div>
       </div>
 
-      <div class="grid gap-1 sm:grid-cols-2 sm:gap-4">
+      <div class="grid gap-4 sm:grid-cols-2">
         <div class="grid gap-1">
-          <label class="text-xs uppercase tracking-wide text-slate-400">Password Admin</label>
-          <input v-model="form.admin_password" type="password" required class="rounded border border-slate-700 bg-slate-950 px-3 py-2" />
+          <label class="text-xs font-semibold uppercase tracking-wide text-slate-500">Password Admin</label>
+          <input
+            v-model="form.admin_password"
+            type="password"
+            required
+            class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
+          />
         </div>
         <div class="grid gap-1">
-          <label class="text-xs uppercase tracking-wide text-slate-400">Konfirmasi Password</label>
-          <input v-model="form.admin_password_confirmation" type="password" required class="rounded border border-slate-700 bg-slate-950 px-3 py-2" />
+          <label class="text-xs font-semibold uppercase tracking-wide text-slate-500">Konfirmasi Password</label>
+          <input
+            v-model="form.admin_password_confirmation"
+            type="password"
+            required
+            class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
+          />
         </div>
       </div>
 
-      <div class="flex items-center gap-3">
-        <button type="submit" class="rounded bg-emerald-500 px-4 py-2 font-semibold text-slate-950 hover:bg-emerald-400" :disabled="loading">
+      <div class="flex flex-wrap items-center gap-3">
+        <button
+          type="submit"
+          class="rounded-lg bg-blue-600 px-5 py-2 font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+          :disabled="loading"
+        >
           {{ loading ? 'Membuat...' : 'Buat Tenant' }}
         </button>
-        <p v-if="error" class="text-sm text-rose-400">{{ error }}</p>
-        <p v-if="success" class="text-sm text-emerald-400">Tenant berhasil dibuat.</p>
+        <p v-if="error" class="text-sm text-rose-500">{{ error }}</p>
       </div>
     </form>
 
     <section class="space-y-4">
-      <h2 class="text-xl font-semibold text-emerald-300">Daftar Tenant</h2>
-      <div class="overflow-hidden rounded border border-slate-800">
-        <table class="min-w-full divide-y divide-slate-800 text-sm">
-          <thead class="bg-slate-900/70 text-xs uppercase tracking-wide text-slate-400">
+      <h2 class="text-xl font-semibold text-slate-900">Daftar Tenant</h2>
+      <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm shadow-blue-100/30">
+        <table class="min-w-full divide-y divide-slate-200 text-sm">
+          <thead class="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
             <tr>
-              <th class="px-4 py-2 text-left">Slug</th>
-              <th class="px-4 py-2 text-left">Nama</th>
-              <th class="px-4 py-2 text-left">Database</th>
-              <th class="px-4 py-2 text-left">Dibuat</th>
-              <th class="px-4 py-2 text-right">Aksi</th>
+              <th class="px-4 py-3 text-left">Slug</th>
+              <th class="px-4 py-3 text-left">Nama</th>
+              <th class="px-4 py-3 text-left">Database</th>
+              <th class="px-4 py-3 text-left">Dibuat</th>
+              <th class="px-4 py-3 text-right">Aksi</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-slate-800">
-            <tr v-for="tenant in tenants" :key="tenant.id" class="hover:bg-slate-900/50">
-              <td class="px-4 py-2 font-mono text-emerald-300">{{ tenant.id }}</td>
-              <td class="px-4 py-2">{{ tenant.name ?? '-' }}</td>
-              <td class="px-4 py-2 font-mono text-xs text-slate-400">{{ tenant.database }}</td>
-              <td class="px-4 py-2 text-slate-400">{{ formatDate(tenant.created_at) }}</td>
-              <td class="px-4 py-2 text-right">
+          <tbody class="divide-y divide-slate-100">
+            <tr v-for="tenant in tenants" :key="tenant.id" class="transition hover:bg-blue-50/70">
+              <td class="px-4 py-3 font-mono text-sm text-blue-600">{{ tenant.id }}</td>
+              <td class="px-4 py-3">{{ tenant.name ?? '-' }}</td>
+              <td class="px-4 py-3 font-mono text-xs text-slate-400">{{ tenant.database }}</td>
+              <td class="px-4 py-3 text-slate-500">{{ formatDate(tenant.created_at) }}</td>
+              <td class="px-4 py-3 text-right">
                 <RouterLink
                   :to="{ name: 'tenant-login', params: { tenant: tenant.id } }"
-                  class="rounded bg-slate-800 px-3 py-1 text-xs font-semibold uppercase tracking-wide hover:bg-emerald-500 hover:text-slate-950"
+                  class="inline-flex items-center rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-blue-600 transition hover:bg-blue-100 hover:text-blue-700"
                 >
                   Buka Store
                 </RouterLink>
               </td>
             </tr>
             <tr v-if="!tenants.length">
-              <td colspan="5" class="px-4 py-6 text-center text-slate-500">Belum ada tenant terdaftar.</td>
+              <td colspan="5" class="px-4 py-6 text-center text-slate-400">Belum ada tenant terdaftar.</td>
             </tr>
           </tbody>
         </table>
@@ -88,11 +123,12 @@
 <script setup>
 import { onMounted, reactive, ref } from 'vue';
 import { adminApi } from '../../api/client';
+import { useFeedbackStore } from '../../stores/feedback';
 
 const tenants = ref([]);
 const loading = ref(false);
 const error = ref('');
-const success = ref(false);
+const feedbackStore = useFeedbackStore();
 
 const form = reactive({
     name: '',
@@ -120,11 +156,9 @@ async function createTenant() {
 
     loading.value = true;
     error.value = '';
-    success.value = false;
 
     try {
         await adminApi.post('/admin/tenants', form);
-        success.value = true;
         Object.assign(form, {
             name: '',
             slug: '',
@@ -133,6 +167,7 @@ async function createTenant() {
             admin_password: '',
             admin_password_confirmation: '',
         });
+        feedbackStore.showSuccess('Tenant baru berhasil dibuat.');
         await fetchTenants();
     } catch (err) {
         error.value = err.response?.data?.message ?? 'Gagal membuat tenant.';

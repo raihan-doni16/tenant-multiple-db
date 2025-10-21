@@ -1,64 +1,3 @@
-<template>
-  <section class="space-y-6">
-    <header class="space-y-1">
-      <h1 class="text-3xl font-semibold text-emerald-400">Keranjang Belanja</h1>
-      <p class="text-sm text-slate-400">Kelola item keranjang untuk tenant <span class="font-mono text-emerald-300">{{ tenant }}</span>.</p>
-    </header>
-
-    <div v-if="loading" class="rounded border border-slate-800 bg-slate-900/40 p-6 text-slate-400">
-      Memuat keranjang...
-    </div>
-
-    <div v-else class="space-y-6">
-      <div v-if="error" class="rounded border border-rose-500/40 bg-rose-500/10 p-4 text-sm text-rose-300">
-        {{ error }}
-      </div>
-
-      <div v-if="!cart.items.length" class="rounded border border-slate-800 bg-slate-900/60 p-6 text-center text-sm text-slate-400">
-        Keranjang kosong. Mulai belanja di katalog produk.
-      </div>
-
-      <div v-else class="space-y-4">
-        <article
-          v-for="item in cart.items"
-          :key="item.id"
-          class="flex flex-col gap-4 rounded border border-slate-800 bg-slate-900/60 p-4 sm:flex-row sm:items-center sm:justify-between"
-        >
-          <div>
-            <h3 class="text-lg font-semibold text-emerald-300">{{ item.product.name }}</h3>
-            <p class="text-xs text-slate-500">SKU: {{ item.product.sku }}</p>
-            <p class="mt-2 text-sm text-slate-400">Harga: {{ formatCurrency(item.unit_price) }}</p>
-          </div>
-
-          <div class="flex items-center gap-3">
-            <label class="text-xs uppercase tracking-wide text-slate-400">Jumlah</label>
-            <input
-              :value="item.quantity"
-              type="number"
-              min="0"
-              class="w-20 rounded border border-slate-700 bg-slate-950 px-3 py-2 text-right"
-              @change="(event) => onQuantityChange(item, Number(event.target.value))"
-            />
-            <p class="text-sm font-semibold text-emerald-400">{{ formatCurrency(item.subtotal) }}</p>
-            <button
-              type="button"
-              class="rounded bg-rose-500 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-950 hover:bg-rose-400"
-              @click="removeItem(item)"
-            >
-              Hapus
-            </button>
-          </div>
-        </article>
-      </div>
-
-      <footer class="flex flex-col items-end gap-2 rounded border border-slate-800 bg-slate-900/60 p-4">
-        <p class="text-sm text-slate-400">Total item: {{ cart.total_items }}</p>
-        <p class="text-xl font-semibold text-emerald-400">Subtotal: {{ formatCurrency(cart.subtotal) }}</p>
-        <p class="text-xs text-slate-500">Checkout dan integrasi pembayaran dapat ditambahkan sesuai kebutuhan.</p>
-      </footer>
-    </div>
-  </section>
-</template>
 
 <script setup>
 import { onBeforeUnmount, onMounted, reactive, ref, computed } from 'vue';
@@ -133,3 +72,68 @@ onBeforeUnmount(() => {
     window.removeEventListener('cart:updated', handleCartUpdated);
 });
 </script>
+<template>
+  <section class="space-y-8">
+    <header class="space-y-2">
+      <h1 class="text-3xl font-semibold text-slate-900">Keranjang Belanja</h1>
+      <p class="text-sm text-slate-500">
+        Kelola item keranjang untuk tenant <span class="font-mono text-blue-600">{{ tenant }}</span>.
+      </p>
+    </header>
+
+    <div v-if="loading" class="rounded-2xl border border-slate-200 bg-white p-6 text-slate-500 shadow-sm shadow-blue-100/20">
+      Memuat keranjang...
+    </div>
+
+    <div v-else class="space-y-6">
+      <div v-if="error" class="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-600">
+        {{ error }}
+      </div>
+
+      <div
+        v-if="!cart.items.length"
+        class="rounded-2xl border border-slate-200 bg-white p-6 text-center text-sm text-slate-500 shadow-sm shadow-blue-100/20"
+      >
+        Keranjang kosong. Mulai belanja di katalog produk.
+      </div>
+
+      <div v-else class="space-y-4">
+        <article
+          v-for="item in cart.items"
+          :key="item.id"
+          class="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-blue-100/30 sm:flex-row sm:items-center sm:justify-between"
+        >
+          <div>
+            <h3 class="text-lg font-semibold text-slate-900">{{ item.product.name }}</h3>
+            <p class="text-xs uppercase tracking-wide text-slate-400">SKU: {{ item.product.sku }}</p>
+            <p class="mt-2 text-sm text-slate-500">Harga: {{ formatCurrency(item.unit_price) }}</p>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-3 rounded-xl bg-slate-50 px-4 py-3">
+            <label class="text-xs font-semibold uppercase tracking-wide text-slate-500">Jumlah</label>
+            <input
+              :value="item.quantity"
+              type="number"
+              min="0"
+              class="w-20 rounded-lg border border-slate-200 bg-white px-3 py-2 text-right text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
+              @change="(event) => onQuantityChange(item, Number(event.target.value))"
+            />
+            <p class="text-sm font-semibold text-blue-600">{{ formatCurrency(item.subtotal) }}</p>
+            <button
+              type="button"
+              class="rounded-full bg-rose-500 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-white transition hover:bg-rose-600"
+              @click="removeItem(item)"
+            >
+              Hapus
+            </button>
+          </div>
+        </article>
+      </div>
+
+      <footer class="flex flex-col items-end gap-2 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-blue-100/30">
+        <p class="text-sm text-slate-500">Total item: {{ cart.total_items }}</p>
+        <p class="text-xl font-semibold text-blue-600">Subtotal: {{ formatCurrency(cart.subtotal) }}</p>
+      </footer>
+    </div>
+  </section>
+</template>

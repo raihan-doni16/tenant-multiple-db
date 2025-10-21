@@ -1,71 +1,15 @@
-<template>
-  <section class="space-y-6">
-    <header class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-      <div>
-        <h1 class="text-3xl font-semibold text-emerald-400">Katalog Produk</h1>
-        <p class="text-sm text-slate-400">Menampilkan produk aktif untuk tenant <span class="font-mono text-emerald-300">{{ tenant }}</span>.</p>
-      </div>
-      <form class="flex gap-2" @submit.prevent="fetchProducts">
-        <input v-model="filters.search" type="search" placeholder="Cari produk..." class="rounded border border-slate-700 bg-slate-950 px-3 py-2 text-sm" />
-        <button type="submit" class="rounded bg-emerald-500 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-emerald-400">Cari</button>
-      </form>
-    </header>
-
-    <div v-if="error" class="rounded border border-rose-500/40 bg-rose-500/10 px-4 py-3 text-sm text-rose-300">
-      {{ error }}
-    </div>
-
-    <div v-if="loading" class="grid place-items-center rounded border border-slate-800 bg-slate-900/40 py-12 text-slate-400">
-      Memuat produk...
-    </div>
-
-    <div v-else class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      <article
-        v-for="product in products"
-        :key="product.id"
-        class="flex flex-col justify-between rounded border border-slate-800 bg-slate-900/50 p-4"
-      >
-        <div class="space-y-2">
-          <RouterLink
-            :to="{ name: 'tenant-product-detail', params: { tenant, productId: product.id } }"
-            class="text-lg font-semibold text-emerald-300 hover:text-emerald-200"
-          >
-            {{ product.name }}
-          </RouterLink>
-          <p class="text-sm text-slate-400">{{ product.description ? truncate(product.description) : 'Belum ada deskripsi.' }}</p>
-        </div>
-
-        <div class="mt-4 flex items-center justify-between text-sm">
-          <span class="font-semibold text-emerald-400">{{ formatCurrency(product.price) }}</span>
-          <span class="text-slate-400">Stok: {{ product.stock }}</span>
-        </div>
-
-        <button
-          type="button"
-          class="mt-4 rounded bg-emerald-500 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-emerald-400 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-400"
-          :disabled="!authStore.isAuthenticated || !product.is_active"
-          @click="addToCart(product)"
-        >
-          {{ authStore.isAuthenticated ? 'Tambahkan ke Keranjang' : 'Masuk untuk Belanja' }}
-        </button>
-      </article>
-
-      <p v-if="!products.length" class="col-span-full rounded border border-slate-800 bg-slate-900/60 py-10 text-center text-sm text-slate-400">
-        Tidak ada produk ditemukan.
-      </p>
-    </div>
-  </section>
-</template>
 
 <script setup>
 import { reactive, ref, onMounted, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { api, tenantPath } from '../../api/client';
 import { useAuthStore } from '../../stores/auth';
+import { useFeedbackStore } from '../../stores/feedback';
 
 const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
+const feedbackStore = useFeedbackStore();
 
 const tenant = computed(() => route.params.tenant);
 
@@ -107,7 +51,9 @@ async function addToCart(product) {
             product_id: product.id,
             quantity: 1,
         });
+        feedbackStore.showSuccess('Produk ditambahkan ke keranjang.');
         window.dispatchEvent(new CustomEvent('cart:updated'));
+        product.stock = Math.max(0, Number(product.stock) - 1);
     } catch (err) {
         error.value = err.response?.data?.message ?? 'Gagal menambahkan produk ke keranjang';
     }
@@ -126,3 +72,78 @@ onMounted(() => {
     void fetchProducts();
 });
 </script>
+<template>
+  <section class="space-y-8">
+    <header class="flex flex-col gap-3 rounded-2xl bg-white p-6 shadow-sm shadow-blue-100/30 sm:flex-row sm:items-center sm:justify-between">
+      <div>
+        <h1 class="text-3xl font-semibold text-slate-900">Katalog Produk</h1>
+        <p class="text-sm text-slate-500">
+          Menampilkan produk aktif untuk tenant <span class="font-mono text-blue-600">{{ tenant }}</span>.
+        </p>
+      </div>
+      <form class="flex w-full gap-3 sm:w-auto" @submit.prevent="fetchProducts">
+        <input
+          v-model="filters.search"
+          type="search"
+          placeholder="Cari produk..."
+          class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100 sm:w-64"
+        />
+        <button
+          type="submit"
+          class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
+        >
+          Cari
+        </button>
+      </form>
+    </header>
+
+    <div v-if="error" class="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-600">
+      {{ error }}
+    </div>
+
+    <div v-if="loading" class="grid place-items-center rounded-2xl border border-slate-200 bg-white py-12 text-slate-500 shadow-sm shadow-blue-100/20">
+      Memuat produk...
+    </div>
+
+    <div v-else class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+      <article
+        v-for="product in products"
+        :key="product.id"
+        class="flex flex-col justify-between rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-blue-100/30 transition hover:-translate-y-1 hover:shadow-lg"
+      >
+        <div class="space-y-3">
+          <RouterLink
+            :to="{ name: 'tenant-product-detail', params: { tenant, productId: product.id } }"
+            class="text-lg font-semibold text-slate-900 transition hover:text-blue-600"
+          >
+            {{ product.name }}
+          </RouterLink>
+          <p class="text-sm text-slate-500">
+            {{ product.description ? truncate(product.description) : 'Belum ada deskripsi.' }}
+          </p>
+        </div>
+
+        <div class="mt-6 flex items-center justify-between text-sm">
+          <span class="text-lg font-semibold text-blue-600">{{ formatCurrency(product.price) }}</span>
+          <span class="text-slate-500">Stok: {{ product.stock }}</span>
+        </div>
+
+        <button
+          type="button"
+          class="mt-6 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400"
+          :disabled="!authStore.isAuthenticated || !product.is_active"
+          @click="addToCart(product)"
+        >
+          {{ authStore.isAuthenticated ? 'Tambahkan ke Keranjang' : 'Masuk untuk Belanja' }}
+        </button>
+      </article>
+
+      <p
+        v-if="!products.length"
+        class="col-span-full rounded-2xl border border-slate-200 bg-white py-10 text-center text-sm text-slate-500 shadow-sm shadow-blue-100/20"
+      >
+        Tidak ada produk ditemukan.
+      </p>
+    </div>
+  </section>
+</template>
