@@ -175,7 +175,7 @@
               class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
             ></textarea>
           </div>
-          <div class="grid gap-4 sm:grid-cols-2">
+         
             <div class="grid gap-1">
               <label class="text-xs font-semibold uppercase tracking-wide text-slate-500">Price</label>
               <input
@@ -197,7 +197,7 @@
                 class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
               />
             </div>
-          </div>
+         
           <label class="flex items-center gap-2 rounded-lg bg-slate-50 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
             <input v-model="form.is_active" type="checkbox" class="h-4 w-4 rounded border border-slate-300 text-blue-600 focus:ring-blue-500" />
             Active product
