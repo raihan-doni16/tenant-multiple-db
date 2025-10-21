@@ -1,61 +1,135 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Ecommerce Multi-Tenant Platform
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Modern ecommerce demo that provisions an isolated database per tenant while sharing a central admin interface. The backend is built with Laravel 12 and Stancl Tenancy v3, while the SPA frontend uses Vue 3, Pinia, and Vite.
 
-## About Laravel
+---
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Stack Overview
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+- **PHP / Laravel 12** – primary backend framework, Sanctum for API auth.
+- **Stancl Tenancy 3.9** – database-per-tenant orchestration, automatic DB provisioning.
+- **PostgreSQL (default)** – central + tenant databases (configurable via env).  
+  - The test suite uses SQLite (file-based) to keep execution isolated and fast.
+- **Vue 3 + Vite + Tailwind CSS** – SPA frontend living in `resources/js`.
+- **Pinia & Vue Router** – state management and single-page routing.
+- **PHPUnit** – unit/feature testing.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### Composer Packages
 
-## Learning Laravel
+| Package | Purpose |
+| --- | --- |
+| `laravel/framework` | Core Laravel application. |
+| `stancl/tenancy` | Multi-database tenancy management. |
+| `laravel/sanctum` | API authentication tokens. |
+| `laravel/tinker` | REPL/debugging support. |
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+### NPM Packages
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+| Package | Purpose |
+| --- | --- |
+| `vue`, `vue-router`, `pinia` | SPA application and state management. |
+| `axios` | HTTP client for frontend API calls. |
+| `vite`, `@vitejs/plugin-vue` | Frontend bundler/dev server. |
+| `@tailwindcss/vite`, `tailwindcss` | Utility-first styling. |
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+---
 
-## Laravel Sponsors
+## Environment & Database Configuration
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+The application expects two database connections:
 
-### Premium Partners
+1. **Central connection** – stores tenant metadata and admin users.  
+   Controlled via `CENTRAL_DB_*` env vars.
+2. **Tenant template / runtime connection** – cloned per tenant on provisioning.  
+   Controlled via `TENANT_DB_*` env vars.
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+Example `.env` snippet (PostgreSQL):
 
-## Contributing
+```ini
+DB_CONNECTION=central
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+CENTRAL_DB_DRIVER=pgsql
+CENTRAL_DB_HOST=localhost
+CENTRAL_DB_PORT=5432
+CENTRAL_DB_DATABASE=ecommerce_central
+CENTRAL_DB_USERNAME=postgres
+CENTRAL_DB_PASSWORD=postgres
 
-## Code of Conduct
+TENANT_DB_DRIVER=pgsql
+TENANT_DB_HOST=localhost
+TENANT_DB_PORT=5432
+TENANT_DB_USERNAME=postgres
+TENANT_DB_PASSWORD=postgres
+TENANCY_DATABASE_PREFIX=tenant_
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
 
-## Security Vulnerabilities
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### Running migrations
 
-## License
+- Central schema: `php artisan migrate`
+- Provisioned tenant migrations run automatically when a new tenant is created.
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+---
+
+## Local Development
+
+1. Copy the example env and tweak DB credentials.
+   ```bash
+   cp .env.example .env
+   ```
+2. Install dependencies and build assets.
+   ```bash
+   composer install
+   npm install
+   npm run build   # or npm run dev for watch mode
+   ```
+3. Generate keys & migrate central DB.
+   ```bash
+   php artisan key:generate
+   php artisan migrate
+   ```
+4. Start servers:
+   ```bash
+   php artisan serve
+   npm run dev
+   ```
+
+### Seed the central admin user
+
+Run the database seeder once to create the default central admin account:
+
+```bash
+php artisan db:seed
+```
+
+You can then sign in at `/admin/login` with:
+
+- Email: `admin@tenant.com`
+- Password: `password`
+
+---
+
+## Tests
+
+The project uses PHPUnit with both unit and feature suites.
+
+| Test | Purpose |
+| --- | --- |
+| `Tests\Unit\ExampleTest` | Skeleton sanity check. |
+| `Tests\Feature\PublicTenantCatalogTest` | Public tenant catalog pagination/search and data exposure. |
+| `Tests\Feature\TenantIsolationTest` | Verifies products and carts remain isolated per tenant DB. |
+| `Tests\Feature\TenantProductAccessTest` | Ensures owner-scoped product listing behaves as expected. |
+
+Run the full suite:
+
+```bash
+php artisan test
+```
+
+All feature tests boot isolated tenant databases using SQLite during CI/local runs.
+
+---
+
+---
+
